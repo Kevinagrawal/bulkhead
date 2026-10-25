@@ -1,0 +1,137 @@
+  // ---------- designed equipment spine ----------
+  const housing = new RoundedBoxGeometry(7.4, 0.62, 1.45, 3, 0.06);
+  housing.translate(-0.1, HULL.cy + 3.46, -0.2);
+  ceramic.push(housing);
+  const housingBase = new THREE.BoxGeometry(7.5, 0.07, 1.5);
+  housingBase.translate(-0.1, HULL.cy + 3.13, -0.2);
+  titanium.push(housingBase);
+  for (const rz of [-0.9, 0.5]) {
+    const rail = new THREE.BoxGeometry(7.4, 0.05, 0.07);
+    rail.translate(-0.1, HULL.cy + 3.2, rz);
+    titanium.push(rail);
+  }
+  // upper service box, set back
+  const topBox = new RoundedBoxGeometry(4.2, 0.3, 1.15, 2, 0.04);
+  topBox.translate(-0.6, HULL.cy + 3.9, -0.62);
+  titanium.push(topBox);
+  // one small quilted gold MLI blanket, an accent rather than a pipe
+  const mliPatch = new RoundedBoxGeometry(1.8, 0.2, 0.95, 2, 0.03);
+  mliPatch.translate(1.25, HULL.cy + 4.08, -0.55);
+  gold.push(mliPatch);
+  // short support feet onto the hull
+  for (const sx of [-3.2, 0.2, 3.2]) {
+    const foot = new THREE.BoxGeometry(0.34, 0.16, 0.9);
+    foot.translate(sx, HULL.cy + 3.05, -0.2);
+    titanium.push(foot);
+  }
+
+  // cupola: a warm eye on the roof
+  const cupX = 1.3;
+  const cupZ = 0.28;
+  const cupBase = new THREE.CylinderGeometry(0.66, 0.7, 0.1, 32);
+  cupBase.translate(cupX, HULL.cy + 3.8, cupZ);
+  titanium.push(cupBase);
+  const cupDrum = new THREE.CylinderGeometry(0.625, 0.625, 0.34, 36);
+  cupDrum.translate(cupX, HULL.cy + 3.99, cupZ);
+  titanium.push(cupDrum);
+  const cupRim = new THREE.TorusGeometry(0.63, 0.032, 6, 40);
+  cupRim.rotateX(HALF_PI);
+  cupRim.translate(cupX, HULL.cy + 4.16, cupZ);
+  titanium.push(cupRim);
+  const cupGlow = new THREE.SphereGeometry(0.55, 32, 14, 0, Math.PI * 2, 0, 1.05);
+  cupGlow.translate(cupX, HULL.cy + 4.14, cupZ);
+  warmGlow.push(cupGlow);
+  const cupGlass = new THREE.SphereGeometry(0.6, 32, 14, 0, Math.PI * 2, 0, 1.05);
+  cupGlass.translate(cupX, HULL.cy + 4.13, cupZ);
+  glass.push(cupGlass);
+  const cupRail = new THREE.TorusGeometry(0.82, 0.022, 5, 40);
+  cupRail.rotateX(HALF_PI);
+  cupRail.translate(cupX, HULL.cy + 4.3, cupZ);
+  titanium.push(cupRail);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + 0.4;
+    const post = new THREE.CylinderGeometry(0.016, 0.016, 0.22, 6);
+    post.translate(cupX + Math.cos(a) * 0.82, HULL.cy + 4.2, cupZ + Math.sin(a) * 0.82);
+    titanium.push(post);
+  }
+
+  // radiator comb on the rear roof: four white fins with titanium edges
+  const radMat = new THREE.MeshStandardMaterial({
+    color: 0xe4e6e4,
+    roughness: 0.4,
+    metalness: 0.28,
+    side: THREE.DoubleSide,
+    envMapIntensity: 0.5,
+  });
+  const fins = [];
+  for (let i = 0; i < 4; i++) {
+    const fx = -2.55 + i * 0.32;
+    const fin = new THREE.BoxGeometry(0.035, 0.95, 1.45);
+    xf(fin, { x: fx, y: HULL.cy + 4.2, z: -1.25, rx: -0.31 });
+    fins.push(fin);
+    const cap = new THREE.BoxGeometry(0.05, 0.04, 1.45);
+    xf(cap, { x: fx, y: HULL.cy + 4.66, z: -1.02, rx: -0.31 });
+    titanium.push(cap);
+  }
+  const finMerge = mergeParts(fins, 'radiator-fins');
+  if (finMerge) {
+    const finMesh = new THREE.Mesh(finMerge, radMat);
+    finMesh.castShadow = true;
+    finMesh.receiveShadow = true;
+    hatchExtras.push(finMesh);
+  }
+  for (const sx of [-2.4, -1.7]) {
+    const strut = new THREE.CylinderGeometry(0.035, 0.035, 0.8, 6);
+    xf(strut, { x: sx, y: HULL.cy + 3.75, z: -1.2, rx: 0.5 });
+    titanium.push(strut);
+  }
+
+  // two dark cable conduits from the housing down the near upper hull
+  for (const cxp of [-2.2, 0.9]) {
+    const pts = [
+      new THREE.Vector3(cxp, HULL.cy + 3.1, 0.45),
+      new THREE.Vector3(cxp - 0.1, HULL.cy + 2.75, 1.5),
+      new THREE.Vector3(cxp - 0.2, HULL.cy + 2.3, 2.35),
+      new THREE.Vector3(cxp - 0.3, HULL.cy + 1.85, 2.95),
+    ];
+    const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.25);
+    const tube = new THREE.TubeGeometry(curve, 24, 0.028, 6, false);
+    dark.push(tube);
+    for (const tt of [0.25, 0.55, 0.85]) {
+      const p = curve.getPoint(tt);
+      const clamp = new THREE.TorusGeometry(0.04, 0.012, 4, 10);
+      clamp.rotateX(HALF_PI);
+      clamp.translate(p.x, p.y, p.z);
+      titanium.push(clamp);
+    }
+  }
+
+  // ---------- comms mast ----------
+  const mastX = 3.2;
+  const mastZ = -1.35;
+  const mastBase = HULL.cy + 3.4;
+  const mast = new THREE.CylinderGeometry(0.04, 0.06, 2.2, 8);
+  mast.translate(mastX, mastBase + 1.1, mastZ);
+  titanium.push(mast);
+  const mastFoot = new THREE.BoxGeometry(0.34, 0.1, 0.34);
+  mastFoot.translate(mastX, mastBase, mastZ);
+  titanium.push(mastFoot);
+  for (let i = 0; i < 2; i++) {
+    const ring = new THREE.TorusGeometry(0.1, 0.012, 4, 8);
+    ring.rotateX(HALF_PI);
+    ring.translate(mastX, mastBase + 0.7 + i * 0.75, mastZ);
+    titanium.push(ring);
+  }
+  const dish = new THREE.SphereGeometry(0.36, 20, 10, 0, Math.PI * 2, 0, 0.8);
+  dish.rotateX(1.0);
+  dish.rotateZ(0.4);
+  dish.translate(mastX, mastBase + 2.15, mastZ - 0.1);
+  titanium.push(dish);
+  const feed = new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6);
+  feed.rotateZ(0.4);
+  feed.translate(mastX + 0.1, mastBase + 2.2, mastZ + 0.12);
+  titanium.push(feed);
+  const beacon = new THREE.SphereGeometry(0.05, 10, 8);
+  beacon.translate(mastX, mastBase + 2.28, mastZ);
+  const beaconMesh = new THREE.Mesh(beacon, redLightMat);
+  beaconMesh.name = 'beacon';

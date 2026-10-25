@@ -1,0 +1,271 @@
+  // ---------- airlock: welded neck, vestibule drum, sealed pressure door ----------
+  const AX = -9.7;             // drum centre
+  const AR = 2.06;             // drum radius
+  const ACY = 3.3;             // door centre height
+  const FACE = -10.85;         // outer face plane
+  const hatchExtras = [];
+
+  // welded domed fairing: main hull radius down to the drum radius
+  const fairingProfile = [
+    [3.34, -7.55],
+    [3.30, -7.70],
+    [3.05, -7.92],
+    [2.72, -8.14],
+    [2.38, -8.34],
+    [2.10, -8.48],
+    [2.06, -8.55],
+  ].map(([r, x]) => new THREE.Vector2(r, x));
+  const fairingGeo = new THREE.LatheGeometry(fairingProfile, 64);
+  fairingGeo.rotateZ(-HALF_PI);
+  fairingGeo.translate(0, ACY, 0);
+  const fairingMat = mats.ceramic.clone();
+  fairingMat.side = THREE.DoubleSide;
+  const fairingMesh = new THREE.Mesh(fairingGeo, fairingMat);
+  fairingMesh.castShadow = true;
+  fairingMesh.receiveShadow = true;
+  hatchExtras.push(fairingMesh);
+  // internal cap behind the fairing (no see-through even if the hull end is open)
+  const hullEndCap = new THREE.Mesh(
+    new THREE.CircleGeometry(3.3, 64),
+    new THREE.MeshStandardMaterial({ color: 0x1b1e20, roughness: 0.7, metalness: 0.3, side: THREE.DoubleSide })
+  );
+  hullEndCap.position.set(-7.62, HULL.cy, 0);
+  hatchExtras.push(hullEndCap);
+
+  // vestibule drum
+  const drum = new THREE.CylinderGeometry(AR, AR, 2.3, 72, 1, true);
+  drum.rotateZ(-HALF_PI);
+  drum.translate(AX, ACY, 0);
+  ceramic.push(drum);
+  // two painted seams
+  for (const dx of [-0.62, 0.62]) {
+    const seam = new THREE.CylinderGeometry(AR + 0.006, AR + 0.006, 0.06, 72, 1, true);
+    seam.rotateZ(-HALF_PI);
+    seam.translate(AX + dx, ACY, 0);
+    dark.push(seam);
+  }
+  // one small porthole on the drum, near side
+  makePorthole(AX - 0.2, AR, -0.16, 0.2, ACY);
+  // grab rail along the near side of the drum
+  const grab = new THREE.CylinderGeometry(0.022, 0.022, 0.9, 8);
+  grab.rotateZ(HALF_PI);
+  grab.translate(AX - 0.4, ACY - 0.75, AR - 0.04);
+  titanium.push(grab);
+  for (const gx of [AX - 0.8, AX]) {
+    const post = new THREE.CylinderGeometry(0.018, 0.018, 0.26, 6);
+    post.translate(gx, ACY - 0.63, AR - 0.06);
+    titanium.push(post);
+  }
+
+  // outer face: ceramic annulus 0.74 -> 2.08, 0.14 thick
+  const faceOuter = new THREE.RingGeometry(0.74, 2.08, 96, 1);
+  faceOuter.rotateY(-HALF_PI);
+  faceOuter.translate(FACE - 0.07, ACY, 0);
+  ceramic.push(faceOuter);
+  const faceInner = new THREE.RingGeometry(0.74, 2.08, 96, 1);
+  faceInner.rotateY(HALF_PI);
+  faceInner.translate(FACE + 0.07, ACY, 0);
+  ceramic.push(faceInner);
+  const faceRim = new THREE.CylinderGeometry(2.08, 2.08, 0.14, 72, 1, true);
+  faceRim.rotateZ(-HALF_PI);
+  faceRim.translate(FACE, ACY, 0);
+  ceramic.push(faceRim);
+  const faceBore = new THREE.CylinderGeometry(0.74, 0.74, 0.16, 64, 1, true);
+  faceBore.rotateZ(-HALF_PI);
+  faceBore.translate(FACE, ACY, 0);
+  titanium.push(faceBore);
+
+  // titanium collar around the opening + six recessed bolt pockets
+  const doorCollar = new THREE.TorusGeometry(0.78, 0.035, 6, 64);
+  doorCollar.rotateY(HALF_PI);
+  doorCollar.translate(FACE - 0.09, ACY, 0);
+  titanium.push(doorCollar);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + 0.3;
+    const pocket = new THREE.CylinderGeometry(0.055, 0.055, 0.035, 12);
+    pocket.rotateZ(-HALF_PI);
+    pocket.translate(FACE - 0.075, ACY + Math.cos(a) * 1.25, Math.sin(a) * 1.25);
+    dark.push(pocket);
+    const bolt = new THREE.CylinderGeometry(0.03, 0.03, 0.05, 8);
+    bolt.rotateZ(-HALF_PI);
+    bolt.translate(FACE - 0.08, ACY + Math.cos(a) * 1.25, Math.sin(a) * 1.25);
+    titanium.push(bolt);
+  }
+
+  // door: 1.42 m, recessed 0.14, shallow dome, medium grey ceramic/graphite
+  const doorPlane = FACE + 0.14;
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0x7d8388,
+    roughness: 0.45,
+    metalness: 0.35,
+    envMapIntensity: 0.7,
+  });
+  const domeGeo = new THREE.SphereGeometry(2.0, 48, 12, 0, Math.PI * 2, 0, 0.356);
+  domeGeo.translate(0, -1.874, 0); // rim to the origin
+  domeGeo.rotateZ(HALF_PI);
+  domeGeo.translate(doorPlane, ACY, 0);
+  const doorMesh = new THREE.Mesh(domeGeo, doorMat);
+  doorMesh.castShadow = true;
+  doorMesh.receiveShadow = true;
+  hatchExtras.push(doorMesh);
+  // thick rim ring
+  const doorRim = new THREE.TorusGeometry(0.735, 0.042, 6, 56);
+  doorRim.rotateY(HALF_PI);
+  doorRim.translate(FACE - 0.01, ACY, 0);
+  titanium.push(doorRim);
+
+  // six radial latches on the door face
+  for (let i = 0; i < 6; i++) {
+    const latch = new THREE.BoxGeometry(0.07, 0.25, 0.04);
+    latch.translate(0, 0.38, 0);
+    latch.rotateX((i / 6) * Math.PI * 2 + 0.32);
+    latch.translate(doorPlane - 0.045, ACY, 0);
+    titanium.push(latch);
+  }
+  // central handwheel (0.44 m)
+  const wheelRing = new THREE.TorusGeometry(0.22, 0.026, 6, 32);
+  wheelRing.rotateY(HALF_PI);
+  wheelRing.translate(doorPlane - 0.13, ACY, 0);
+  titanium.push(wheelRing);
+  for (let i = 0; i < 3; i++) {
+    const spoke = new THREE.BoxGeometry(0.026, 0.44, 0.022);
+    spoke.rotateX((i / 3) * Math.PI);
+    spoke.translate(doorPlane - 0.13, ACY, 0);
+    titanium.push(spoke);
+  }
+  const hub = new THREE.CylinderGeometry(0.045, 0.045, 0.08, 12);
+  hub.rotateZ(-HALF_PI);
+  hub.translate(doorPlane - 0.15, ACY, 0);
+  titanium.push(hub);
+
+  // two heavy hinges on the left side (local -Z)
+  for (const hy of [ACY + 0.34, ACY - 0.34]) {
+    const hinge = new RoundedBoxGeometry(0.16, 0.3, 0.14, 1, 0.02);
+    hinge.translate(FACE - 0.03, hy, -0.75);
+    titanium.push(hinge);
+    const pin = new THREE.CylinderGeometry(0.03, 0.03, 0.34, 8);
+    pin.translate(FACE - 0.06, hy, -0.83);
+    titanium.push(pin);
+  }
+
+  // small round window high on the door
+  const winY = ACY + 0.32;
+  const winZ = 0.17;
+  const winRing = new THREE.TorusGeometry(0.19, 0.038, 6, 36);
+  winRing.rotateY(HALF_PI);
+  winRing.translate(FACE - 0.03, winY, winZ);
+  titanium.push(winRing);
+  const winWarm = new THREE.CircleGeometry(0.16, 32);
+  winWarm.rotateY(-HALF_PI);
+  winWarm.translate(FACE + 0.01, winY, winZ);
+  warmGlow.push(winWarm);
+  const winGlass = new THREE.CircleGeometry(0.17, 32);
+  winGlass.rotateY(-HALF_PI);
+  winGlass.translate(FACE - 0.025, winY, winZ);
+  glass.push(winGlass);
+
+  // thin warm strip above the door + two amber lamps at 9 and 3 o'clock
+  const stripMat = new THREE.MeshStandardMaterial({
+    color: 0x1a120a,
+    emissive: 0xffb26b,
+    emissiveIntensity: 2.4,
+    roughness: 0.45,
+  });
+  const strip = new THREE.TorusGeometry(0.93, 0.012, 5, 40, 1.15);
+  strip.rotateZ(Math.PI * 0.38);
+  strip.rotateY(HALF_PI);
+  strip.translate(FACE - 0.008, ACY, 0);
+  hatchExtras.push(new THREE.Mesh(strip, stripMat));
+  const amberMat = new THREE.MeshStandardMaterial({
+    color: 0x1a0e04,
+    emissive: 0xffa24a,
+    emissiveIntensity: 1.9,
+    roughness: 0.4,
+  });
+  for (const az of [-0.86, 0.86]) {
+    const lamp = new THREE.BoxGeometry(0.055, 0.09, 0.055);
+    lamp.translate(FACE - 0.012, ACY, az);
+    hatchExtras.push(new THREE.Mesh(lamp, amberMat));
+  }
+
+  // face markings
+  const makeFaceLabel = (text, w, h, y, z) => {
+    const texture = new THREE.CanvasTexture(stencilCanvas(text, '', 512, 128));
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.02,
+        roughness: 0.7,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+      })
+    );
+    mesh.position.set(FACE - 0.006, y, z);
+    mesh.rotation.y = -HALF_PI;
+    hatchExtras.push(mesh);
+  };
+  makeFaceLabel('04', 0.55, 0.62, ACY + 1.16, 0.0);
+  makeFaceLabel('AIRLOCK', 0.78, 0.2, ACY - 0.96, 0.0);
+  makeFaceLabel('1.5 M / 101.3 KPA', 0.86, 0.11, ACY - 1.16, 0.0);
+
+  // landing: grated platform, four-step ladder to the regolith, steps to the sill
+  const platformX = FACE - 0.62;
+  const platform = new RoundedBoxGeometry(1.15, 0.07, 2.0, 2, 0.015);
+  platform.translate(platformX, 1.05, 0.2);
+  dark.push(platform);
+  for (let i = 0; i < 7; i++) {
+    const rib = new THREE.BoxGeometry(1.1, 0.02, 0.06);
+    rib.translate(platformX, 1.1, -0.75 + i * 0.32);
+    titanium.push(rib);
+  }
+  // two stout diagonal brackets to the ground
+  for (const bz of [-0.72, 1.12]) {
+    const brace = new THREE.CylinderGeometry(0.055, 0.065, 1.3, 8);
+    brace.rotateZ(0.42);
+    brace.translate(platformX - 0.48, 0.55, bz + 0.1);
+    titanium.push(brace);
+    const foot = new THREE.CylinderGeometry(0.22, 0.26, 0.1, 16);
+    foot.translate(platformX - 0.75, 0.05, bz + 0.1);
+    dark.push(foot);
+  }
+  // four-step ladder from the regolith to the platform
+  for (let i = 0; i < 4; i++) {
+    const rung = new THREE.CylinderGeometry(0.03, 0.03, 0.72, 8);
+    rung.rotateX(HALF_PI);
+    rung.translate(platformX - 0.78, 0.16 + i * 0.28, 0.2);
+    titanium.push(rung);
+  }
+  for (const lz of [-0.18, 0.58]) {
+    const stile = new THREE.CylinderGeometry(0.028, 0.028, 1.15, 8);
+    stile.rotateZ(0.16);
+    stile.translate(platformX - 0.78, 0.6, lz);
+    titanium.push(stile);
+  }
+  // four steps up from the platform to the door sill
+  for (let i = 0; i < 4; i++) {
+    const step = new THREE.BoxGeometry(0.26, 0.055, 0.92);
+    step.translate(platformX + 0.52, 1.28 + i * 0.33, 0.2);
+    dark.push(step);
+  }
+  // two simple handrails at the platform
+  for (const hz of [-0.72, 1.12]) {
+    const rail = new THREE.CylinderGeometry(0.022, 0.022, 1.1, 8);
+    rail.translate(platformX - 0.35, 1.62, hz);
+    titanium.push(rail);
+    for (const px of [platformX - 0.85, platformX + 0.1]) {
+      const post = new THREE.CylinderGeometry(0.02, 0.02, 1.1, 6);
+      post.translate(px, 1.15, hz);
+      titanium.push(post);
+    }
+  }
+  // warm spotlight above the door, aimed down at the door and steps
+  const doorLight = new THREE.SpotLight(0xffb26b, 14, 8, 0.6, 0.85, 1.6);
+  doorLight.position.set(FACE - 1.1, ACY + 1.4, 0.55);
+  doorLight.target.position.set(FACE - 0.9, 1.0, 0.35);
+  hatchExtras.push(doorLight);
+  hatchExtras.push(doorLight.target);
+

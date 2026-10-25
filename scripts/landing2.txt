@@ -1,0 +1,67 @@
+  // landing: 2.0 x 1.2 m grated platform, ladder, steps, rails
+  const platformX = FACE - 0.68;
+  const platform = new RoundedBoxGeometry(1.2, 0.07, 2.0, 2, 0.015);
+  platform.translate(platformX, 1.05, 0.2);
+  dark.push(platform);
+  // titanium edge frame
+  for (const ez of [-0.78, 1.18]) {
+    const edge = new THREE.BoxGeometry(1.24, 0.08, 0.06);
+    edge.translate(platformX, 1.06, ez);
+    titanium.push(edge);
+  }
+  for (const ex of [-0.58, 0.58]) {
+    const edge = new THREE.BoxGeometry(0.06, 0.08, 2.0);
+    edge.translate(platformX + ex, 1.06, 0.2);
+    titanium.push(edge);
+  }
+  for (let i = 0; i < 7; i++) {
+    const rib = new THREE.BoxGeometry(1.12, 0.02, 0.05);
+    rib.translate(platformX, 1.1, -0.75 + i * 0.32);
+    titanium.push(rib);
+  }
+  // four diagonal brackets to the hull / regolith
+  for (const bx of [-0.5, 0.5]) {
+    for (const bz of [-0.7, 1.1]) {
+      const brace = new THREE.CylinderGeometry(0.05, 0.06, 1.15, 8);
+      brace.rotateZ(bx > 0 ? 0.5 : -0.5);
+      brace.translate(platformX + bx * 1.25, 0.55, bz);
+      titanium.push(brace);
+      const foot = new THREE.CylinderGeometry(0.2, 0.24, 0.1, 14);
+      foot.translate(platformX + bx * 1.85, 0.05, bz);
+      dark.push(foot);
+    }
+  }
+  // four-step ladder: 0.35 m deep treads, 0.05 m thick
+  for (let i = 0; i < 4; i++) {
+    const tread = new THREE.BoxGeometry(0.35, 0.05, 0.9);
+    tread.translate(platformX - 0.82, 0.14 + i * 0.29, 0.2);
+    titanium.push(tread);
+  }
+  for (const lz of [-0.24, 0.64]) {
+    const stile = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8);
+    stile.rotateZ(0.13);
+    stile.translate(platformX - 0.82, 0.62, lz);
+    titanium.push(stile);
+  }
+  // four steps up from the platform to the sill
+  for (let i = 0; i < 4; i++) {
+    const step = new THREE.BoxGeometry(0.35, 0.05, 0.94);
+    step.translate(platformX + 0.55, 1.28 + i * 0.33, 0.2);
+    titanium.push(step);
+    for (let g = 0; g < 3; g++) {
+      const grip = new THREE.BoxGeometry(0.3, 0.012, 0.03);
+      grip.translate(platformX + 0.55, 1.31 + i * 0.33, -0.12 + g * 0.3);
+      titanium.push(grip);
+    }
+  }
+  // rails, 0.04 m
+  for (const hz of [-0.78, 1.18]) {
+    const rail = new THREE.CylinderGeometry(0.04, 0.04, 1.1, 8);
+    rail.translate(platformX - 0.35, 1.62, hz);
+    titanium.push(rail);
+    for (const px of [platformX - 0.85, platformX + 0.1]) {
+      const post = new THREE.CylinderGeometry(0.032, 0.032, 1.1, 6);
+      post.translate(px, 1.15, hz);
+      titanium.push(post);
+    }
+  }

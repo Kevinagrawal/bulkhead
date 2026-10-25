@@ -1,0 +1,87 @@
+  // ---------- installed solar array ----------
+  const solarGeo = [];
+  const arrayX = -12.5;
+  const arrayZ = -4.0;
+  const panelYaw = 0.35;
+  const panelTilt = -0.52;
+
+  const plate = new RoundedBoxGeometry(1.6, 0.18, 1.2, 2, 0.03);
+  plate.translate(arrayX, 0.09, arrayZ);
+  dark.push(plate);
+  for (const bx of [-0.58, 0.58]) {
+    for (const bz of [-0.38, 0.38]) {
+      const bolt = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 8);
+      bolt.translate(arrayX + bx, 0.2, arrayZ + bz);
+      titanium.push(bolt);
+    }
+  }
+  const mast = new THREE.CylinderGeometry(0.15, 0.17, 2.4, 16);
+  mast.translate(arrayX, 1.35, arrayZ);
+  titanium.push(mast);
+  const motor = new RoundedBoxGeometry(0.4, 0.3, 0.4, 2, 0.02);
+  motor.translate(arrayX, 2.6, arrayZ);
+  titanium.push(motor);
+  const motorCap = new THREE.CylinderGeometry(0.12, 0.12, 0.14, 12);
+  motorCap.rotateX(HALF_PI);
+  motorCap.translate(arrayX, 2.6, arrayZ + 0.24);
+  dark.push(motorCap);
+  const junction = new RoundedBoxGeometry(0.5, 0.64, 0.34, 2, 0.02);
+  junction.translate(arrayX + 0.55, 0.52, arrayZ + 0.55);
+  dark.push(junction);
+  const junctionFace = new THREE.BoxGeometry(0.02, 0.36, 0.24);
+  junctionFace.translate(arrayX + 0.8, 0.52, arrayZ + 0.55);
+  titanium.push(junctionFace);
+  const placard = new THREE.BoxGeometry(0.02, 0.2, 0.28);
+  placard.translate(arrayX + 0.18, 1.7, arrayZ + 0.17);
+  titanium.push(placard);
+  // support truss under the wide panel bank
+  const truss = new THREE.CylinderGeometry(0.045, 0.045, 7.4, 8);
+  truss.rotateX(HALF_PI);
+  truss.translate(arrayX, 1.55, arrayZ);
+  titanium.push(truss);
+  for (const sz of [-1, 1]) {
+    const outrigger = new THREE.CylinderGeometry(0.035, 0.045, 3.9, 8);
+    outrigger.rotateZ(0.5);
+    outrigger.rotateY(sz * 0.5);
+    outrigger.translate(arrayX + 0.8, 0.95, arrayZ + sz * 0.9);
+    titanium.push(outrigger);
+  }
+
+  // two rows of three 2.4 x 1.1 m panels
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 3; col++) {
+      const px = arrayX;
+      const py = 1.85 + row * 1.18;
+      const pz = arrayZ + (col - 1) * 2.44;
+      const panel = new THREE.BoxGeometry(2.4, 1.1, 0.06);
+      xf(panel, { x: px, y: py, z: pz, rx: panelTilt, ry: panelYaw });
+      solarGeo.push(panel);
+      const frame = new THREE.BoxGeometry(2.5, 1.2, 0.02);
+      xf(frame, { x: px - 0.04, y: py - 0.02, z: pz - 0.02, rx: panelTilt, ry: panelYaw });
+      titanium.push(frame);
+      const stem = new THREE.CylinderGeometry(0.025, 0.025, 0.2, 6);
+      stem.translate(px + 0.05, py - 0.62, pz);
+      titanium.push(stem);
+    }
+  }
+  const rackArm = new THREE.CylinderGeometry(0.05, 0.05, 7.2, 8);
+  rackArm.rotateX(HALF_PI);
+  rackArm.translate(arrayX + 0.02, 2.55, arrayZ);
+  titanium.push(rackArm);
+
+  // conduit to the habitat on short stands
+  const conduitPts = [
+    new THREE.Vector3(arrayX + 0.65, 0.28, arrayZ + 0.65),
+    new THREE.Vector3(arrayX + 2.8, 0.14, arrayZ + 1.6),
+    new THREE.Vector3(-10.2, 0.12, 1.0),
+    new THREE.Vector3(-7.0, 0.2, 2.2),
+  ];
+  const conduitCurve = new THREE.CatmullRomCurve3(conduitPts, false, 'catmullrom', 0.3);
+  const conduit = new THREE.TubeGeometry(conduitCurve, 40, 0.028, 6, false);
+  dark.push(conduit);
+  for (let i = 1; i <= 4; i++) {
+    const p = conduitCurve.getPoint(i / 5);
+    const stand = new THREE.CylinderGeometry(0.028, 0.028, 0.16, 6);
+    stand.translate(p.x, 0.06, p.z);
+    titanium.push(stand);
+  }
